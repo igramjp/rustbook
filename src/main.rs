@@ -1,4 +1,12 @@
 fn main() {
+    // RPN
+    /*
+    let exp = "6.1 5.2 4.3 * + 3.4 2.5 / 1.6 * -";
+    let ans = rpn(exp);
+    debug_assert_eq!("26.2840", format!("{:.4}", ans));
+    println!("{} = {:.4}", exp, ans);
+    */
+
     // スカラ型
     // ユニット (unit type)
     // 関数を呼び出し (ないはずの) 戻り値に変数 ret を束縛する
@@ -73,19 +81,48 @@ fn main() {
     let f3 = 578.6E+7; // f64 型 (指数部も指定できる)
     println!("578.6E+7 = {}", f3);
 
-    // RPN
-    /*
-    let exp = "6.1 5.2 4.3 * + 3.4 2.5 / 1.6 * -";
-    let ans = rpn(exp);
-    debug_assert_eq!("26.2840", format!("{:.4}", ans));
-    println!("{} = {:.4}", exp, ans);
-    */
-}
+    // 文字 (char type)
+    let c1 = 'A'; // char 型
+    let c2 = 'a';
+    assert!(c1 < c2); // 文字コード順で大小比較
+    assert!(c1.is_uppercase());
 
-// スカラ型
-// ユニット
-fn hello() {
-    println!("hello");
+    let c3 = '0';
+    assert!(c3.is_digit(10)); // 10 進数の数字か検査
+
+    let _c4 = '\t'; // タブ文字
+    let _c5 = '\n'; // 改行 (LF) 文字
+    let _c6 = '\''; // シングルクオート (')
+    let _c7 = '\\'; // バックスラッシュ (\)
+    let _c8 = '\x7F'; // 制御文字 del を 8 ビットコードで表現 (16 進数で 2 桁)
+    let _c9 = '漢'; // ソースコードに直接漢字も書ける (ファイルは UTF-8 形式でエンコードしておくこと)
+    let _c10 = '\u{5b57}'; // '字' をユニコードのエスケープコードで表現 (16進数で最大 6 桁)
+    let _c11 = '\u{1f600}'; // 絵文字
+
+    assert_eq!(std::mem::size_of::<char>(), 4);
+
+    // 参照 (reference type)
+    let mut n14 = 0;
+    println!("main: n = {}", n14);
+
+    f1(n14);
+    println!("main: n = {}", n14);
+
+    // &mut n で n の値を指す可変のポインタを作成する
+    f2(&mut n14);
+    println!("main: n = {}", n14);
+
+    let c12 = 'A'; // char 型
+    let c12_ptr = &c12; // &char 型．イミュータブルな参照 (不変の参照)
+    assert_eq!(*c12_ptr, 'A');
+
+    let mut n15 = 0; // i32 型
+    let n15_ptr = &mut n15; // &mut i32 型．ミュータブルな参照 (可変の参照)
+    assert_eq!(*n15_ptr, 0);
+
+    // 可変の参照では参照先の値を変更できる
+    *n15_ptr = 1_000;
+    assert_eq!(*n15_ptr, 1_000);
 }
 
 // RPN
@@ -122,3 +159,25 @@ where
     }
 }
 */
+
+// スカラ型
+// ユニット
+fn hello() {
+    println!("hello");
+}
+
+// 参照
+// 関数 f1 は呼び出し元の値のコピーを引数 n に束縛し，1 に変更する
+fn f1(mut _n: u32) {
+    _n = 1;
+    println!("f1: n = {}", _n);
+}
+
+// 関数 f2 は呼び出し元の値を指すポインタを受け取り，ポインタが指す場所に 2 を格納する
+fn f2(n_ptr: &mut u32) {
+    println!("f2: n_ptr = {:p}", n_ptr);
+
+    // * を付けると参照先にアクセスできる．これを参照外し (dereference) と呼ぶ
+    *n_ptr = 2;
+    println!("f2: *n_ptr = {}", *n_ptr);
+}
