@@ -123,6 +123,99 @@ fn main() {
     // 可変の参照では参照先の値を変更できる
     *n15_ptr = 1_000;
     assert_eq!(*n15_ptr, 1_000);
+
+    // 生ポインタ (raw pointer type)
+    // 標準ライブラリの API ドキュメントのページ名は「pointer (primitive type)」になる
+    // 「raw pointer」では検索できないので注意
+    let _c13 = 'A'; // char 型
+    let c13_ptr: *const char = &_c13; // *const char 型．不変の生ポインタ
+                                      // 生ポインタの参照外しは unsafe な操作
+    assert_eq!(unsafe { *c13_ptr }, 'A');
+
+    let mut n16 = 0; // i32 型
+    let n16_ptr: *mut i32 = &mut n16; // *mut i32 型．可変の生ポインタ
+
+    // 可変の生ポインタでは参照先の値を変更できる
+    unsafe {
+        *n16_ptr = 1_000;
+        assert_eq!(*n16_ptr, 1_000);
+    }
+
+    // 関数ポインタ (fn pointer type)
+    // 変数に型注釈として関数ポインタ型を指定することで，関数名から関数ポインタを得られる
+    let mut f: fn(i32) -> i32 = double;
+    assert_eq!(f(-42), -84); // double 関数で 2 倍された
+
+    f = abs;
+    assert_eq!(f(-42), 42); // abs 関数で絶対値を得た
+
+    // 関数ポインタのサイズは usize と同じ (x86_64 アーキテクチャなら 8 バイト)
+    assert_eq!(std::mem::size_of_val(&f), std::mem::size_of::<usize>());
+
+    // 変数に型注釈を付けないと関数ポインタ型 (fn pointer) ではなく関数定義型 (fn item)
+    // だと推論される
+    // let mut f_bad = double;
+    let f_bad = double;
+
+    // 関数定義型は関数ごとに異なる型になるので，変数 f_bad に別の関数定義型を束縛できない
+    // f_bad = abs; // 型が合わずコンパイルエラーとなる
+
+    // 関数定義型の値のサイズは 0 バイト
+    assert_eq!(std::mem::size_of_val(&f_bad), 0);
+
+    // 関数ポインタとクロージャ
+    let x = 4; // 変数 x を 4 に束縛する
+
+    // クロージャを定義する．すると x がクロージャの環境に補足される (キャプチャされる)
+    let adder = |n| n + x;
+    assert_eq!(adder(2), 2 + 4);
+
+    let mut state = false;
+    // 別のクロージャを定義する．このクロージャは引数を取らない
+    let mut flipflop = || {
+        // state が補足される
+        state = !state; // 状態を反転させる
+        state
+    };
+
+    assert!(flipflop()); // true
+    assert!(!flipflop()); // true
+    assert!(flipflop()); // true
+
+    // クロージャが返す値だけでなく，state の値も変化している
+    assert!(state); // true
+
+    // let b = 5;
+    // クロージャは 1 つ 1 つが独自の匿名の型を持つため，変数 f の型はこのクロージャの匿名型になる
+    // let mut closure = |a| a * 3 + b;
+
+    // 別のクロージャでじゃ変数 f と型が合わずコンパイルエラーになる
+    // closure = |a| a * 4 + b;
+
+    // 環境に何も補足しないクロージャは関数ポインタ型になれる
+    // let mut closure: fn(i32) -> i32 = |n| n * 3;
+    let closure: fn(i32) -> i32 = |n| n * 3;
+    assert_eq!(closure(-42), -126);
+
+    // 環境に何かを補足するクロージャは関数ポインタ型になれない
+    // let z = 4;
+    // closure = |n| n * z; // z を補足している
+
+    // クロージャが要求される場面で関数ポインタを渡す
+    let v1 = vec!["I", "love", "Rust!"]
+        .into_iter()
+        .map(|s| s.len()) // &str 型の引数 s を取るクロージャ
+        .collect::<Vec<_>>();
+    assert_eq!(v1, vec![1, 4, 5]);
+
+    // この map() メソッドの引数は関数ポインタで置き換えられる
+    // len() メソッドは &str 型の引数を 1 つだけ取るので
+    // len() メソッドへの関数ポインタでも型が一致する
+    let v2 = vec!["I", "love", "Rust!"]
+        .into_iter()
+        .map(str::len)
+        .collect::<Vec<_>>();
+    assert_eq!(v2, vec![1, 4, 5]);
 }
 
 // RPN
@@ -180,4 +273,19 @@ fn f2(n_ptr: &mut u32) {
     // * を付けると参照先にアクセスできる．これを参照外し (dereference) と呼ぶ
     *n_ptr = 2;
     println!("f2: *n_ptr = {}", *n_ptr);
+}
+
+// 関数ポインタ
+// この関数は引数を 2 倍にした値を返す
+fn double(n: i32) -> i32 {
+    n + n
+}
+
+// この関数は引数の絶対値を返す
+fn abs(n: i32) -> i32 {
+    if n >= 0 {
+        n
+    } else {
+        -n
+    }
 }
