@@ -214,6 +214,41 @@ fn main() {
 
     let str7 = r###"このように#の数を増やすと"##"があっても大丈夫"###;
     assert_eq!(str7, "このように#の数を増やすと\"##\"があっても大丈夫");
+
+    let fruits = "あかりんご, あおりんご\nラズベリー, ブラックベリー";
+
+    // lines() メソッドは改行コード(\n)を含む文字列から1行ずつ
+    // 取り出せるイテレータを作る
+    let mut lines = fruits.lines();
+    // イテレータの next() メソッドで次の行を得る
+    let apple_line = lines.next();
+    assert_eq!(apple_line, Some("あかりんご, あおりんご"));
+    assert_eq!(lines.next(), Some("ラズベリー, ブラックベリー"));
+    assert_eq!(lines.next(), None);
+
+    // りんごの行 (Some(..)) の中身を取り出す
+    if let Some(apples) = apple_line {
+        // 「あか」で始まるかチェック
+        assert!(apples.starts_with("あか"));
+        // 「りんご」の文字を含むかチェック
+        assert!(apples.contains("りんご"));
+        // 「あお」が最初に出現する位置 (UTF-8表現で何バイト目) を得る
+        assert_eq!(apples.find("あお"), Some(17)); // 0 始まりなので 18 バイト目
+
+        // 文字列をカンマ (,) で分割するイテレータを作る
+        let mut apple_iter = apples.split(",");
+        assert_eq!(apple_iter.next(), Some("あかりんご"));
+
+        let green = apple_iter.next();
+        // 左側に余白がある
+        assert_eq!(green, Some(" あおりんご"));
+        // Some(..) の内容に str の trim() メソッドを適用して余白を取り除く
+        assert_eq!(green.map(str::trim), Some("あおりんご"));
+
+        assert_eq!(apple_iter.next(), None);
+    } else {
+        unreachable!();
+    }
 }
 
 // この関数は &[char] 型のスライスを引数に取り，その情報を表示する
