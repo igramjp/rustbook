@@ -249,6 +249,61 @@ fn main() {
     } else {
         unreachable!();
     }
+
+    // s5 から s8 はどれも画面上では 1 文字として表示される
+    let s5 = "a"; // 61
+    let s6 = "あ"; // E3 81 *2
+    let s7 = "😄"; // F0 9F 98 80
+    let s8 = "🇯🇵"; // F0 9F 87 AF F0 9F 87 B5
+
+    // len() メソッドは UTF-8 のバイト数を返す
+    assert_eq!(s5.len(), 1);
+    assert_eq!(s6.len(), 3);
+    assert_eq!(s7.len(), 4);
+    assert_eq!(s8.len(), 8);
+
+    let s9 = "abcあいう";
+    assert_eq!(s9.get(0..1), Some("a"));
+    assert_eq!(s9.get(3..6), Some("あ"));
+    assert_eq!(s9.get(3..4), None); // UTF-8 として解釈できない場合
+
+    let s10 = "かか\u{3099}く";
+    println!("{}", s10);
+
+    let mut iter_s10 = s10.chars(); // chars() の代わりに char_indices() を使うと char と str 上の開始バイトがペアになったタプルが得られる
+    assert_eq!(iter_s10.next(), Some('か'));
+    assert_eq!(iter_s10.next(), Some('か'));
+    assert_eq!(iter_s10.next(), Some('\u{3099}'));
+    assert_eq!(iter_s10.next(), Some('く'));
+    assert_eq!(iter_s10.next(), None);
+
+    let utf8: [u8; 4] = [0x61, 0xe3, 0x81, 0x82];
+    assert_eq!(std::str::from_utf8(&utf8), Ok("aあ"));
+
+    let bad_utf8: [u8; 2] = [0x81, 0x33]; // でたらめなバイト列
+    let result2 = std::str::from_utf8(&bad_utf8);
+    assert!(result2.is_err());
+    println!("{:?}", result2);
+
+    // 文字列リテラル (&'static str) から &mut str は直接得られない
+    // まず文字列リテラルを String へ変換し，そこから &mut str を取り出す
+    let mut string1 = "abcあいう".to_string(); // String 型
+
+    // &mut str を得る．これは String が持つ UTF-8 バイト列を指す可変スライス
+    let str8 = string1.as_mut_str(); // &mut str 型
+
+    // 英小文字を大文字に変更
+    str8.make_ascii_uppercase();
+    assert_eq!(str8, "ABCあいう");
+
+    // &mut str の UTF-8 バイト列を直接操作して "あ" ( 3 バイト) を "*a*" に変更する
+    let b = unsafe { str8.as_bytes_mut() };
+    b[3] = b'*';
+    b[4] = b'a';
+    b[5] = b'*';
+
+    // 大元の String が変更されている
+    assert_eq!(string1, "ABC*a*いう");
 }
 
 // この関数は &[char] 型のスライスを引数に取り，その情報を表示する
